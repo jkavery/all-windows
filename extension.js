@@ -16,7 +16,7 @@ const WindowList = new Lang.Class({
 	_init: function(){
 		this.parent(0.0, 'All Windows');
 
-		this.actor.add_child(new St.Icon({ icon_name: 'view-grid-symbolic', style_class: 'system-status-icon' }));
+		this.add_child(new St.Icon({ icon_name: 'view-grid-symbolic', style_class: 'system-status-icon' }));
         	this.updateMenu();
 
 		this._restacked = global.display.connect('restacked', Lang.bind(this, this.updateMenu));
@@ -62,7 +62,7 @@ const WindowList = new Lang.Class({
                         box.add(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
                         box.add(new St.Label({ text: ' ' }));
                         box.add(item._icon);
-                        item.actor.add_actor(box);
+                        item.add_actor(box);
                         this.menu.addMenuItem(item);
                         empty_menu = false;
                     }
@@ -75,8 +75,8 @@ const WindowList = new Lang.Class({
                     }
                     if(global.workspace_manager.n_workspaces>1) {
                         let item = new PopupMenu.PopupMenuItem(workspace_name);
-                        item.actor.reactive = false;
-                        item.actor.can_focus = false;
+                        item.reactive = false;
+                        item.can_focus = false;
                         if(wks == global.workspace_manager.get_active_workspace().index()) {
                             item.setOrnament(PopupMenu.Ornament.DOT);
                         }
@@ -96,7 +96,7 @@ const WindowList = new Lang.Class({
                         box.add(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
                         box.add(new St.Label({ text: ' ' }));
                         box.add(item._icon);
-                        item.actor.add_actor(box);
+                        item.add_actor(box);
                         this.menu.addMenuItem(item);
                         empty_menu = false;
                     }
@@ -105,20 +105,20 @@ const WindowList = new Lang.Class({
 
         if (empty_menu) {
             let item = new PopupMenu.PopupMenuItem(_("No open windows"))
-            item.actor.reactive = false;
-            item.actor.can_focus = false;
+            item.reactive = false;
+            item.can_focus = false;
             this.menu.addMenuItem(item);
 
-            this.actor.hide();
+            this.hide();
         }
 	else {
-	    this.actor.show();
+	    this.show();
 	}
     },
 
     activateWindow: function(metaWorkspace, metaWindow) {
         if(!metaWindow.is_on_all_workspaces()) { metaWorkspace.activate(global.get_current_time()); }
-        metaWindow.unminimize(global.get_current_time());
+        metaWindow.unminimize();
         metaWindow.unshade(global.get_current_time());
         metaWindow.activate(global.get_current_time());
     },

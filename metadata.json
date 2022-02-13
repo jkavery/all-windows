@@ -2,7 +2,7 @@
 	"shell-version": ["3.30", "40", "41"],
 	"uuid": "all-windows@ezix.org",
 	"name": "All Windows",
-	"url": "https://github.com/lyonel/all-windows",
-	"version": 12,
-	"description": "List open windows of all workspaces"
+	"url": "https://github.com/jkavery/all-windows",
+	"version": 13,
+	"description": "List open windows of all workspaces, plus Save/Restore window positions."
 }

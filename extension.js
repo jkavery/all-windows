@@ -3,7 +3,6 @@ const St = imports.gi.St;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const Panel = imports.ui.panel;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const GLib = imports.gi.GLib;
@@ -153,6 +152,8 @@ class AllWindowsStates {
     }
 }
 
+// With the exception of the _allWindowsStates code that was added, the code below is unchanged from
+// that in extension.js of the All Windows GNOME Shell extension (https://github.com/lyonel/all-windows)
 const WindowList = new Lang.Class({
 	Name: 'WindowList.WindowList',
 	Extends: PanelMenu.Button,

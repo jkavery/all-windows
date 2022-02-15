@@ -1,6 +1,6 @@
 {
-	"shell-version": ["40", "41"],
-	"uuid": "all-windows-srwp@ezix.org",
+	"shell-version": ["40"],
+	"uuid": "all-windows-srwp@jkavery",
 	"name": "All Windows + Save/Restore Window Positions",
 	"url": "https://github.com/jkavery/all-windows",
 	"version": 112,

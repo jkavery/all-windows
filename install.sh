@@ -1,8 +1,8 @@
 #!/bin/sh
 
 BASEDIR=.local/share/gnome-shell/extensions
-DIR=all-windows@ezix.org
-URL=https://github.com/lyonel/all-windows.git
+DIR=all-windows-srwp@ezix.org
+URL=https://github.com/jkavery/all-windows.git
 
 which git 2> /dev/null > /dev/null || ( echo Could not find Git ; exit 1 )
 which gnome-shell 2> /dev/null > /dev/null || ( echo Could not find GNOME Shell ; exit 1 )
@@ -42,5 +42,4 @@ else
 	fi
 fi
 
-echo Restarting GNOME-Shell
-killall -HUP gnome-shell
+echo "Restart GNOME-Shell.  For Wayland, logout and login.  For X: killall -HUP gnome-shell"

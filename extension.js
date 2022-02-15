@@ -8,7 +8,7 @@ const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const GLib = imports.gi.GLib;
 
-const EXTENSION_NAME = 'All Windows';
+const EXTENSION_NAME = 'All Windows + Save/Restore Window Positions';
 
 // At module scope to ride out the extension disable/enable for a system suspend/resume
 // Note that this appears to violate https://gjs.guide/extensions/review-guidelines/review-guidelines.html#destroy-all-objects
@@ -19,6 +19,7 @@ const EXTENSION_NAME = 'All Windows';
 const displaySize__windowId__state = new Map();
 
 // The following are only used for logging
+const EXTENSION_LOG_NAME = 'All Windows SRWP';
 const START_TIME = GLib.DateTime.new_now_local().format_iso8601();
 
 const LOG_NOTHING = 0;
@@ -40,7 +41,7 @@ class WindowState {
         this._title = window.get_title();
         this._log = log;
         if (log >= LOG_INFO)
-            global.log(`${EXTENSION_NAME} Save ${this}`);
+            global.log(`${EXTENSION_LOG_NAME} Save ${this}`);
     }
 
     toString() {
@@ -93,22 +94,22 @@ class WindowState {
         if (this._log >= LOG_ERROR) {
             let hasDiffs = false;
             if (window.minimized !== this._minimized) {
-                global.log(`${EXTENSION_NAME} Error: Wrong minimized: ${window.minimized()}, title:${this._title}`);
+                global.log(`${EXTENSION_LOG_NAME} Error: Wrong minimized: ${window.minimized()}, title:${this._title}`);
                 hasDiffs = true;
             }
             if (window.get_maximized() !== this._maximized) {
-                global.log(`${EXTENSION_NAME} Error: Wrong maximized: ${window.get_maximized()}, title:${this._title}`);
+                global.log(`${EXTENSION_LOG_NAME} Error: Wrong maximized: ${window.get_maximized()}, title:${this._title}`);
                 hasDiffs = true;
             }
             // This test fails when there is a difference between saved and current maximization, though the window
             // behaviour is correct.  Due to an asynchronous update?
             if (this._log >= LOG_EVERYTHING && !this._equalRect(window)) {
                 const r = window.get_frame_rect();
-                global.log(`${EXTENSION_NAME} Error: Wrong rectangle: x:${r.x}, y:${r.y}, w:${r.width}, h:${r.height}, title:${this._title}`);
+                global.log(`${EXTENSION_LOG_NAME} Error: Wrong rectangle: x:${r.x}, y:${r.y}, w:${r.width}, h:${r.height}, title:${this._title}`);
                 hasDiffs = true;
             }
             if (hasDiffs)
-                global.log(`${EXTENSION_NAME} Expecting: ${this}`);
+                global.log(`${EXTENSION_LOG_NAME} Expecting: ${this}`);
         }
     }
 }
@@ -130,7 +131,7 @@ class AllWindowsStates {
             displaySize__windowId__state.set(displaySizeKey, new Map());
         const windowId__state = displaySize__windowId__state.get(displaySizeKey);
         if (this._log >= LOG_DEBUG)
-            global.log(`${EXTENSION_NAME} ${why} map size: ${windowId__state.size}  display size: ${size}  start time: ${START_TIME}`);
+            global.log(`${EXTENSION_LOG_NAME} ${why} map size: ${windowId__state.size}  display size: ${size}  start time: ${START_TIME}`);
         return windowId__state;
     }
 
@@ -147,7 +148,7 @@ class AllWindowsStates {
             if (windowId__state.has(window.get_id()))
                 windowId__state.get(window.get_id()).restore(window);
             else if (this._log >= LOG_DEBUG)
-                global.log(`${EXTENSION_NAME} ${why} did not find: ${window.get_id()} ${window.get_title()}`);
+                global.log(`${EXTENSION_LOG_NAME} ${why} did not find: ${window.get_id()} ${window.get_title()}`);
         }
     }
 }

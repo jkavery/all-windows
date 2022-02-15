@@ -152,8 +152,8 @@ class AllWindowsStates {
     }
 }
 
-// With the exception of the _allWindowsStates code that was added, the code below is unchanged from
-// that in extension.js of the All Windows GNOME Shell extension (https://github.com/lyonel/all-windows)
+// With the exception of fixes for errors logged in syslog and the _allWindowsStates code that was added, the code below
+// is unchanged from that in extension.js of the All Windows GNOME Shell extension (https://github.com/lyonel/all-windows).
 const WindowList = new Lang.Class({
 	Name: 'WindowList.WindowList',
 	Extends: PanelMenu.Button,

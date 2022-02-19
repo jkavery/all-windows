@@ -7,6 +7,11 @@ const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const GLib = imports.gi.GLib;
 
+/*
+  This extension is based on the All Windows GNOME Shell extension (https://github.com/lyonel/all-windows) by Lyonel Vincent.
+  It adds save/restore window posiitons functionality.
+*/
+
 const EXTENSION_NAME = 'All Windows + Save/Restore Window Positions';
 
 // At module scope to ride out the extension disable/enable for a system suspend/resume

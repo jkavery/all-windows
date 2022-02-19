@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BASEDIR=.local/share/gnome-shell/extensions
-DIR=all-windows-srwp@jkavery
+DIR=all-windows-srwp@jkavery.github.io
 URL=https://github.com/jkavery/all-windows.git
 
 which git 2> /dev/null > /dev/null || ( echo Could not find Git ; exit 1 )

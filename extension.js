@@ -305,7 +305,7 @@ function ellipsizeString(s, l) {
 }
 
 function ellipsizedWindowTitle(w) {
-    return ellipsizeString(w.get_title(), 100);
+    return ellipsizeString(w.get_title() || '<no title>', 100);
 }
 
 function init() {

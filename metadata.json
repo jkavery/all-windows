@@ -1,8 +1,12 @@
 {
-	"shell-version": ["40"],
+	"shell-version": [
+	    "3.38",
+	    "40",
+	    "42"
+	],
 	"uuid": "all-windows-srwp@jkavery.github.io",
 	"name": "All Windows + Save/Restore Window Positions",
 	"url": "https://github.com/jkavery/all-windows",
-	"version": 112,
+	"version": 2,
 	"description": "List open windows of all workspaces, plus Save/Restore window positions (run automatically on Suspend/Resume, a workaround for Ubuntu bug #1778983)."
 }

@@ -156,6 +156,39 @@ class AllWindowsStates {
     }
 }
 
+// dbus interface
+const Gio = imports.gi.Gio;
+const Lang = imports.lang;
+let _allWindowsStates = null;
+const LoadSaveWindowPositionIface = '<node> \
+<interface name="com.srwp.LoadSaveWindowPosition"> \
+<method name="savePosition"> \
+    <arg type="s" direction="in" /> \
+</method> \
+<method name="restorePosition"> \
+    <arg type="s" direction="in" /> \
+</method> \
+</interface> \
+</node>';
+
+const LoadSaveWindowPosition = new Lang.Class({
+    Name: 'LoadSaveWindowPosition',
+
+    _init: function() {
+        this._dbusImpl = Gio.DBusExportedObject.wrapJSObject(LoadSaveWindowPositionIface, this);
+        this._dbusImpl.export(Gio.DBus.session, '/com/srwp/LoadSaveWindowPosition');
+    },
+
+    savePosition: function(str) {
+    _allWindowsStates.saveWindowPositions(str);
+    },
+
+    restorePosition: function(str) {
+    _allWindowsStates.restoreWindowPositions(str);
+    }
+});
+
+
 // The code below is from the All Windows GNOME Shell extension (https://github.com/lyonel/all-windows) with these changes:
 // * fixes for errors logged in syslog by GNOME Shell 40,
 // * removal of uses of the Lang module,
@@ -168,6 +201,10 @@ const WindowList = GObject.registerClass({
 
         this._allWindowsStates = new AllWindowsStates(LOG_LEVEL);
         this._allWindowsStates.restoreWindowPositions('Enable restore');
+
+        // add dbus interface
+        this._dbus = new LoadSaveWindowPosition();
+        _allWindowsStates = this._allWindowsStates
 
         this.add_child(new St.Icon({icon_name: 'view-grid-symbolic', style_class: 'system-status-icon'}));
         this.updateMenu();

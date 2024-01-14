@@ -2,7 +2,8 @@
 	"shell-version": [
 	    "3.38",
 	    "40",
-	    "42"
+	    "42",
+	    "45"
 	],
 	"uuid": "all-windows-srwp@jkavery.github.io",
 	"name": "All Windows + Save/Restore Window Positions",

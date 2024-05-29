@@ -5,10 +5,11 @@ import Shell from 'gi://Shell';
 import GLib from 'gi://GLib';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js'
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+// import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 /*
   This extension is based on the All Windows GNOME Shell extension (https://github.com/lyonel/all-windows) by Lyonel Vincent.
@@ -18,18 +19,17 @@ import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/ex
 const EXTENSION_NAME = 'All Windows + Save/Restore Window Positions';
 
 // At module scope to ride out the extension disable/enable for a system suspend/resume
-// Note that this appears to violate https://gjs.guide/extensions/review-guidelines/review-guidelines.html#destroy-all-objects
-// though the earlier the example shows init() creating an extension object.  The extension object is empty, but it's still an object.
-// This map will contain primitives but never any object references.  Are Gobject references what the guidelines are actually prohibiting?
-// If this extension were written in the style shown in the guidelines, it looks like this would be part of the Extension class,
-// initialized by init().
+// Note that because it is never cleared, it violates the Static Objects section of 
+// https://gjs.guide/extensions/review-guidelines/review-guidelines.html#only-use-initialization-for-static-resources
+// This map will contain primitives but never any object references.  Are Gobject references what the guidelines are
+// mostly prohibiting?  Also, it won't grow very large (there is one not-large entry for each display size encountered).
 const displaySize__windowId__state = new Map();
 
 // The following are only used for logging
 const EXTENSION_LOG_NAME = 'All Windows SRWP';
 const START_TIME = GLib.DateTime.new_now_local().format_iso8601();
 
-const LOG_NOTHING = 0;
+//const LOG_NOTHING = 0;
 const LOG_ERROR = 1;
 const LOG_INFO = 2;
 const LOG_DEBUG = 3;
@@ -48,7 +48,7 @@ class WindowState {
         this._title = window.get_title();
         this._log = log;
         if (log >= LOG_INFO)
-            global.log(`${EXTENSION_LOG_NAME} Save ${this}`);
+            console.log(`${EXTENSION_LOG_NAME} Save ${this}`);
     }
 
     toString() {
@@ -101,22 +101,22 @@ class WindowState {
         if (this._log >= LOG_ERROR) {
             let hasDiffs = false;
             if (window.minimized !== this._minimized) {
-                global.log(`${EXTENSION_LOG_NAME} Error: Wrong minimized: ${window.minimized()}, title:${this._title}`);
+                console.error(`${EXTENSION_LOG_NAME} Error: Wrong minimized: ${window.minimized()}, title:${this._title}`);
                 hasDiffs = true;
             }
             if (window.get_maximized() !== this._maximized) {
-                global.log(`${EXTENSION_LOG_NAME} Error: Wrong maximized: ${window.get_maximized()}, title:${this._title}`);
+                console.error(`${EXTENSION_LOG_NAME} Error: Wrong maximized: ${window.get_maximized()}, title:${this._title}`);
                 hasDiffs = true;
             }
             // This test fails when there is a difference between saved and current maximization, though the window
             // behaviour is correct.  Due to an asynchronous update?
             if (this._log >= LOG_EVERYTHING && !this._equalRect(window)) {
                 const r = window.get_frame_rect();
-                global.log(`${EXTENSION_LOG_NAME} Error: Wrong rectangle: x:${r.x}, y:${r.y}, w:${r.width}, h:${r.height}, title:${this._title}`);
+                console.error(`${EXTENSION_LOG_NAME} Error: Wrong rectangle: x:${r.x}, y:${r.y}, w:${r.width}, h:${r.height}, title:${this._title}`);
                 hasDiffs = true;
             }
             if (hasDiffs)
-                global.log(`${EXTENSION_LOG_NAME} Expecting: ${this}`);
+                console.error(`${EXTENSION_LOG_NAME} Expecting: ${this}`);
         }
     }
 }
@@ -137,7 +137,7 @@ class AllWindowsStates {
             displaySize__windowId__state.set(displaySizeKey, new Map());
         const windowId__state = displaySize__windowId__state.get(displaySizeKey);
         if (this._log >= LOG_DEBUG)
-            global.log(`${EXTENSION_LOG_NAME} ${why} map size: ${windowId__state.size}  display size: ${size}  start time: ${START_TIME}`);
+            console.log(`${EXTENSION_LOG_NAME} ${why} map size: ${windowId__state.size}  display size: ${size}  start time: ${START_TIME}`);
         return windowId__state;
     }
 
@@ -154,7 +154,7 @@ class AllWindowsStates {
             if (windowId__state.has(window.get_id()))
                 windowId__state.get(window.get_id()).restore(window);
             else if (this._log >= LOG_DEBUG)
-                global.log(`${EXTENSION_LOG_NAME} ${why} did not find: ${window.get_id()} ${window.get_title()}`);
+                console.log(`${EXTENSION_LOG_NAME} ${why} did not find: ${window.get_id()} ${window.get_title()}`);
         }
     }
 }
@@ -298,8 +298,6 @@ class WindowList extends PanelMenu.Button {
         this.parent(actor, event);
     }
 });
-
-let _windowlist;
 
 function ellipsizeString(s, l) {
     if (s.length > l)

@@ -18,7 +18,6 @@ In addition, window positions are automatically saved when the computer is suspe
 ### Limitations
  * Restore does not manage which windows are on top.  However, in testing to date the correct windows have always been shown on top.
  * When a password is required after a suspend, enough time typically passes for the restore to happen automatically.  If not, *Restore window positions* must manually be pressed.
- * Without a password, [Bug #1885444 “Suspend/sleep waits 30 seconds” : Bugs : xfce4-screensaver package : Ubuntu](https://bugs.launchpad.net/ubuntu/+source/xfce4-screensaver/+bug/1885444) prevents automatic restore from operating.
  * Save/restore does not work across reboots.
 
 Configuration
@@ -28,16 +27,14 @@ There is nothing to configure.
 Installation
 ------------
 To install this extension you can either
- * use http://extensions.gnome.org (caution: it may not contain the most recent versions)
- * use the GNOME Shell Extension Manager
+ * use the [GNOME Extensions hub](https://extensions.gnome.org/extension/4833/all-windows-saverestore-window-positions/) (caution: it doesn't always contain the most recent versions)
  * copy it under ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/ in your home directory
- * use the install.sh script to install automatically
 
-Note: you may have to explicitly enable the extension using the GNOME Shell Extension Manager after installation.
+Note: you may have to explicitly enable the extension after installation.
 
 Compatibility
 -------------
-This extension has been tested on GNOME 3.38, 40 and 42.
+This extension has been tested on GNOME 3.38, 40, 42, 45 and 46.
 
 License
 -------

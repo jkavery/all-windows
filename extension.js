@@ -1,7 +1,7 @@
-import GObject from 'gi://GObject';
 import St from 'gi://St';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
+import GObject from 'gi://GObject';
 import GLib from 'gi://GLib';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -166,13 +166,14 @@ class AllWindowsStates {
 // * addition of _allWindowsStates code.
 const WindowList = GObject.registerClass(
 class WindowList extends PanelMenu.Button {
+
     _init() {
         super._init(0.0, EXTENSION_NAME);
 
         this._allWindowsStates = new AllWindowsStates(LOG_LEVEL);
         this._allWindowsStates.restoreWindowPositions('Enable restore');
 
-        this.add_child(new St.Icon({icon_name: 'view-grid-symbolic', style_class: 'system-status-icon'}));
+        this.add_child(new St.Icon({ icon_name: 'view-grid-symbolic', style_class: 'system-status-icon' }));
         this.updateMenu();
 
         this._restacked = global.display.connect('restacked', () => this.updateMenu());
@@ -205,33 +206,33 @@ class WindowList extends PanelMenu.Button {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         }
 
-        for (let wks = 0; wks < global.workspace_manager.n_workspaces; ++wks) {
+        for ( let wks=0; wks<global.workspace_manager.n_workspaces; ++wks ) {
             // construct a list with all windows
             let workspace_name = Meta.prefs_get_workspace_name(wks);
             let metaWorkspace = global.workspace_manager.get_workspace_by_index(wks);
             let windows = metaWorkspace.list_windows();
             let sticky_windows = windows.filter(
-                function (w) {
+                function(w) {
                     return !w.is_skip_taskbar() && w.is_on_all_workspaces();
                 }
             );
             windows = windows.filter(
-                function (w) {
+                function(w) {
                     return !w.is_skip_taskbar() && !w.is_on_all_workspaces();
                 }
             );
 
-            if (sticky_windows.length && (wks === 0)) {
-                for (let i = 0; i < sticky_windows.length; ++i) {
+            if(sticky_windows.length && (wks==0)) {
+                for ( let i = 0; i < sticky_windows.length; ++i ) {
                     let metaWindow = sticky_windows[i];
                     let item = new PopupMenu.PopupMenuItem('');
                     item.connect('activate', () => this.activateWindow(metaWorkspace, metaWindow));
                     item._window = sticky_windows[i];
                     let app = tracker.get_window_app(item._window);
-                    let box = new St.BoxLayout({x_expand: true});
+                    let box = new St.BoxLayout( { x_expand: true  } );
                     item._icon = app.create_icon_texture(24);
-                    box.add(new St.Label({text: ellipsizedWindowTitle(metaWindow), x_expand: true}));
-                    box.add(new St.Label({text: ' '}));
+                    box.add(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
+                    box.add(new St.Label({ text: ' ' }));
                     box.add(item._icon);
                     item.add_actor(box);
                     this.menu.addMenuItem(item);
@@ -240,30 +241,32 @@ class WindowList extends PanelMenu.Button {
                 this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             }
 
-            if (windows.length) {
-                if (wks > 0)
+            if(windows.length) {
+                if(wks>0) {
                     this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-                if (global.workspace_manager.n_workspaces > 1) {
+                }
+                if(global.workspace_manager.n_workspaces>1) {
                     let item = new PopupMenu.PopupMenuItem(workspace_name);
                     item.reactive = false;
                     item.can_focus = false;
-                    if (wks === global.workspace_manager.get_active_workspace().index())
+                    if(wks == global.workspace_manager.get_active_workspace().index()) {
                         item.setOrnament(PopupMenu.Ornament.DOT);
+                    }
                     this.menu.addMenuItem(item);
                     empty_menu = false;
                 }
 
 
-                for (let i = 0; i < windows.length; ++i) {
+                for ( let i = 0; i < windows.length; ++i ) {
                     let metaWindow = windows[i];
                     let item = new PopupMenu.PopupMenuItem('');
                     item.connect('activate', () => this.activateWindow(metaWorkspace, metaWindow));
                     item._window = windows[i];
                     let app = tracker.get_window_app(item._window);
-                    let box = new St.BoxLayout({x_expand: true});
+                    let box = new St.BoxLayout( { x_expand: true  } );
                     item._icon = app.create_icon_texture(24);
-                    box.add(new St.Label({text: ellipsizedWindowTitle(metaWindow), x_expand: true}));
-                    box.add(new St.Label({text: ' '}));
+                    box.add(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
+                    box.add(new St.Label({ text: ' ' }));
                     box.add(item._icon);
                     item.add_actor(box);
                     this.menu.addMenuItem(item);
@@ -280,33 +283,34 @@ class WindowList extends PanelMenu.Button {
             // this.menu.addMenuItem(item);
 
             this.hide();
-        } else {
+        } 
+        else {
             this.show();
         }
     }
 
     activateWindow(metaWorkspace, metaWindow) {
-        if (!metaWindow.is_on_all_workspaces())
-            metaWorkspace.activate(global.get_current_time());
+        if(!metaWindow.is_on_all_workspaces()) { metaWorkspace.activate(global.get_current_time()); }
         metaWindow.unminimize();
-        metaWindow.unshade(global.get_current_time());
-        metaWindow.activate(global.get_current_time());
+        metaWindow.activate(0);
     }
 
     _onButtonPress(actor, event) {
         this.updateMenu();
         this.parent(actor, event);
     }
+
 });
 
-function ellipsizeString(s, l) {
-    if (s.length > l)
-        return `${s.substr(0, l)}...`;
+function ellipsizeString(s, l){
+    if(s.length > l) {
+        return s.substr(0, l)+'...';
+    }
     return s;
 }
 
-function ellipsizedWindowTitle(w) {
-    return ellipsizeString(w.get_title() || '<no title>', 100);
+function ellipsizedWindowTitle(w){
+    return ellipsizeString(w.get_title()||"-", 100);
 }
 
 export default class AllWindowsExtension extends Extension {
@@ -316,9 +320,7 @@ export default class AllWindowsExtension extends Extension {
     }
 
     disable() {
-        if (this._windowlist) {
-        this._windowlist.destroy();
+        this._windowlist?.destroy();
         this._windowlist = null;
-        }
     }
 }

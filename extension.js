@@ -231,10 +231,10 @@ class WindowList extends PanelMenu.Button {
                     let app = tracker.get_window_app(item._window);
                     let box = new St.BoxLayout( { x_expand: true  } );
                     item._icon = app.create_icon_texture(24);
-                    box.add(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
-                    box.add(new St.Label({ text: ' ' }));
-                    box.add(item._icon);
-                    item.add_actor(box);
+                    box.add_child(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
+                    box.add_child(new St.Label({ text: ' ' }));
+                    box.add_child(item._icon);
+                    item.add_child(box);
                     this.menu.addMenuItem(item);
                     empty_menu = false;
                 }
@@ -265,10 +265,10 @@ class WindowList extends PanelMenu.Button {
                     let app = tracker.get_window_app(item._window);
                     let box = new St.BoxLayout( { x_expand: true  } );
                     item._icon = app.create_icon_texture(24);
-                    box.add(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
-                    box.add(new St.Label({ text: ' ' }));
-                    box.add(item._icon);
-                    item.add_actor(box);
+                    box.add_child(new St.Label({ text: ellipsizedWindowTitle(metaWindow), x_expand: true }));
+                    box.add_child(new St.Label({ text: ' ' }));
+                    box.add_child(item._icon);
+                    item.add_child(box);
                     this.menu.addMenuItem(item);
                     empty_menu = false;
                 }

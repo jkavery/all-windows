@@ -34,7 +34,7 @@ Note: you may have to explicitly enable the extension after installation.
 
 Compatibility
 -------------
-This extension has been tested on GNOME 3.38, 40, 42, 45 and 46.
+This extension has been tested on GNOME 3.38, 40, 42 and 46.
 
 License
 -------

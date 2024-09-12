@@ -29,7 +29,7 @@ const LOG_INFO = 2;
 const LOG_DEBUG = 3;
 const LOG_EVERYTHING = 4;
 
-const LOG_LEVEL = LOG_ERROR;
+const LOG_LEVEL = LOG_DEBUG;
 
 const DISPLAYS_WINDOWS_STATE_FILE = "displays-windows-state.json"
 
@@ -331,13 +331,14 @@ class WindowList extends PanelMenu.Button {
     _init(metadata) {
         super._init(0.0, metadata.name);
 
-        this._allWindowsStates = new AllWindowsStates(metadata.uuid, LOG_LEVEL);
-        this._allWindowsStates.restoreWindowPositions('Enable: Restore').then (() => {
+        (async () => {
+            this._allWindowsStates = new AllWindowsStates(metadata.uuid, LOG_LEVEL);
+            await this._allWindowsStates.restoreWindowPositions('Enable: Restore');
             this.add_child(new St.Icon({ icon_name: 'view-grid-symbolic', style_class: 'system-status-icon' }));
             this.updateMenu();
 
             this._restacked = global.display.connect('restacked', () => this.updateMenu());
-        }).catch (e => {
+        })().catch (e => {
             console.error(`${EXTENSION_LOG_NAME}: WindowList._init caught:\n`, e);
         });
     }
@@ -492,9 +493,12 @@ export default class AllWindowsExtension extends Extension {
     }
 
     disable() {
-        this._windowlist?.destroy().then (() => {
+        (async () => {
+            await this._windowlist?.destroy();
+            if (LOG_LEVEL >= LOG_DEBUG)
+                console.log(`${EXTENSION_LOG_NAME} disable's destroy is done`);
             this._windowlist = null;
-        }).catch (e => {
+        })().catch (e => {
             console.error(`${EXTENSION_LOG_NAME}: disable caught:\n`, e);
         });
     }

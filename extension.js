@@ -12,6 +12,8 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+const { Clutter } = imports.gi;
+
 // import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 /*
@@ -341,6 +343,8 @@ class WindowList extends PanelMenu.Button {
         })().catch (e => {
             console.error(`${EXTENSION_LOG_NAME}: WindowList._init caught:\n`, e);
         });
+
+        this.connect('event', this._onClicked.bind(this));
     }
 
     async destroy() {
@@ -353,6 +357,19 @@ class WindowList extends PanelMenu.Button {
         super.destroy();
     }
 
+    _onClicked(actor, event) {
+        // Check if it's a button click event
+        if (event.type() !== Clutter.EventType.TOUCH_BEGIN &&
+             event.type() !== Clutter.EventType.BUTTON_PRESS)
+            return Clutter.EVENT_PROPAGATE;
+
+        if (event.get_button() !== 2) // check if it's middle click
+            return Clutter.EVENT_PROPAGATE;
+    
+        this._allWindowsStates.restoreWindowPositions('Restore').catch (e => {console.error(`${EXTENSION_LOG_NAME}: Restore menu item caught:\n`, e);});
+
+        return Clutter.EVENT_STOP;
+    }
 
     updateMenu() {
         this.menu.removeAll();

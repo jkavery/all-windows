@@ -1,5 +1,5 @@
 {
-	"shell-version": ["46"],
+        "shell-version": ["46","47"],
 	"uuid": "all-windows-srwp@jkavery.github.io",
 	"name": "All Windows + Save/Restore Window Positions",
 	"url": "https://github.com/jkavery/all-windows",

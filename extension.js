@@ -29,7 +29,7 @@ const LOG_INFO = 2;
 const LOG_DEBUG = 3;
 const LOG_EVERYTHING = 4;
 
-const LOG_LEVEL = LOG_DEBUG;
+const LOG_LEVEL = LOG_ERROR;
 
 const DISPLAYS_WINDOWS_STATE_FILE = "displays-windows-state.json"
 

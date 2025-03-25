@@ -488,7 +488,7 @@ export default class AllWindowsExtension extends Extension {
     enable() {
         this._allWindowsStates = new AllWindowsStates(this._metadata.uuid, LOG_LEVEL);
         this._windowlist = new WindowList(this._allWindowsStates, this._metadata);
-        Main.panel.addToStatusArea(this.uuid, this._windowlist, -1);
+        Main.panel.addToStatusArea(this.uuid, this._windowlist, -1, 'right');
     }
 
     disable() {

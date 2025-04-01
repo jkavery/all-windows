@@ -31,7 +31,7 @@ const LOG_INFO = 2;
 const LOG_DEBUG = 3;
 const LOG_EVERYTHING = 4;
 
-const LOG_LEVEL = LOG_DEBUG;
+const LOG_LEVEL = LOG_ERROR;
 
 const DISPLAYS_WINDOWS_STATE_FILE = "displays-windows-state.json"
 
@@ -246,6 +246,7 @@ class AllWindowsStates {
     }
 
     async destroy() {
+        await this.saveWindowPositions('Disable: Save');
         await this.#saveWindowsStates();
         this.#windowsStates?.clear();
     }
@@ -330,11 +331,11 @@ class AllWindowsStates {
 const WindowList = GObject.registerClass(
 class WindowList extends PanelMenu.Button {
 
-    _init(metadata) {
+    _init(allWindowsStates, metadata) {
         super._init(0.0, metadata.name);
 
         (async () => {
-            this._allWindowsStates = new AllWindowsStates(metadata.uuid, LOG_LEVEL);
+            this._allWindowsStates = allWindowsStates;
             await this._allWindowsStates.restoreWindowPositions('Enable: Restore');
             this.add_child(new St.Icon({ icon_name: 'view-grid-symbolic', style_class: 'system-status-icon' }));
             this.updateMenu();
@@ -347,13 +348,10 @@ class WindowList extends PanelMenu.Button {
         this.connect('event', this._onClicked.bind(this));
     }
 
-    async destroy() {
+    destroy() {
         global.display.disconnect(this._restacked);
 
-        if (this._allWindowsStates) {
-            await this._allWindowsStates.saveWindowPositions('Disable: Save');
-            await this._allWindowsStates.destroy();
-        }
+        this._allWindowsStates = null;
         super.destroy();
     }
 
@@ -505,13 +503,15 @@ export default class AllWindowsExtension extends Extension {
     }
 
     enable() {
-        this._windowlist = new WindowList(this._metadata);
-        Main.panel.addToStatusArea(this.uuid, this._windowlist, -1);
+        this._allWindowsStates = new AllWindowsStates(this._metadata.uuid, LOG_LEVEL);
+        this._windowlist = new WindowList(this._allWindowsStates, this._metadata);
+        Main.panel.addToStatusArea(this.uuid, this._windowlist, -1, 'right');
     }
 
     disable() {
+        this._windowlist?.destroy();
         (async () => {
-            await this._windowlist?.destroy();
+            await this._allWindowsStates?.destroy();
             if (LOG_LEVEL >= LOG_DEBUG)
                 console.log(`${EXTENSION_LOG_NAME} disable's destroy is done`);
             this._windowlist = null;

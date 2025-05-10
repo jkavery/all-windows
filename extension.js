@@ -22,14 +22,47 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 // The following are only used for logging
 const EXTENSION_LOG_NAME = 'All Windows SRWP';
 const START_TIME = GLib.DateTime.new_now_local().format_iso8601();
+let enableCount = 0;
 
-//const LOG_NOTHING = 0;
 const LOG_ERROR = 1;
 const LOG_INFO = 2;
 const LOG_DEBUG = 3;
 const LOG_EVERYTHING = 4;
 
-const LOG_LEVEL = LOG_ERROR;
+const LOG_DEFAULT = LOG_ERROR;
+
+class Log {
+    #enableCount;
+    // Intended to be called at the beginning of Extension.enable().
+    constructor(settings) {
+        // Reading the debug logging setting only when constructed at each enable is good enough.
+        // The setting could be bound to the WindowList GObject so changes took effect immediately,
+        // but that is ugly and brittle.
+        const level = settings.get_boolean("debug") ? LOG_DEBUG : LOG_DEFAULT;
+        this.debugp = level >= LOG_DEBUG;
+        enableCount += 1;
+        this.#enableCount = enableCount;
+        this.prefix = `${EXTENSION_LOG_NAME} #${this.#enableCount}:`;
+    }
+
+    // Don't use console.debug(), so that debug control is only by settings and LOG_DEFAULT.
+
+    log(msg) {
+        console.log(`${EXTENSION_LOG_NAME} #${this.#enableCount}: ${msg}`);
+    }
+    error(msg) {
+        console.error(`${EXTENSION_LOG_NAME} #${this.#enableCount} Error: ${msg}`);
+    }
+    exception(msg, e) {
+        console.error(`${EXTENSION_LOG_NAME} #${this.#enableCount} Exception: ${msg}:\n`, e);
+    }
+
+    // Use when msg doesn't need to be built at runtime
+    debug(msg) {
+        if (this.debugp)
+            this.log(msg);
+    }
+}
 
 const DISPLAYS_WINDOWS_STATE_FILE = "displays-windows-state.json"
 
@@ -53,8 +86,8 @@ class Persist {
         // Not an asynchronous mkdir because that would require a lot of code for little benefit.
         // Any directories are only created once, though two file tests are done every suspend/resume.
         this.#enabled = (GLib.mkdir_with_parents(directoryPath, 0o755) === 0);
-        if (! this.#enabled && log >= LOG_ERROR) {
-            console.error(`${EXTENSION_LOG_NAME} Error: could not make directory ${directoryPath} - window positions will not be saved across suspend/resume`);
+        if (! this.#enabled) {
+            this.#log.error(`could not make directory ${directoryPath} - window positions will not be saved across suspend/resume`);
         }
         this.#stateFile = Gio.File.new_for_path(GLib.build_filenamev([directoryPath, DISPLAYS_WINDOWS_STATE_FILE]));
     }
@@ -62,14 +95,14 @@ class Persist {
     async save(obj) {
         if (this.#enabled) {
             const str = JSON.stringify(obj, Persist.#replacer);
-            if (this.#log >= LOG_DEBUG) {
-                console.log(`${EXTENSION_LOG_NAME} Saving state to ${DISPLAYS_WINDOWS_STATE_FILE}`);
+            if (this.#log.debugp) {
+                this.#log.log(`Saving state to ${DISPLAYS_WINDOWS_STATE_FILE}`);
             }
             const bytes = new GLib.Bytes(str);
             await this.#stateFile.replace_contents_bytes_async(
                 bytes, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-            if (this.#log >= LOG_DEBUG) {
-                console.log(`${EXTENSION_LOG_NAME} Saved state to ${DISPLAYS_WINDOWS_STATE_FILE}`);
+            if (this.#log.debugp) {
+                this.#log.log(`Saved state to ${DISPLAYS_WINDOWS_STATE_FILE}`);
             }
             return true;
         }
@@ -78,21 +111,21 @@ class Persist {
 
     async load() {
         if (this.#enabled) {
-            if (this.#log >= LOG_DEBUG) {
-                console.log(`${EXTENSION_LOG_NAME} Loading ${DISPLAYS_WINDOWS_STATE_FILE}`);
+            if (this.#log.debugp) {
+                this.#log.log(`Loading ${DISPLAYS_WINDOWS_STATE_FILE}`);
             }
             const [contents,] = await this.#stateFile.load_contents_async(null);
             if (contents) {
                 const str = new TextDecoder().decode(contents);
-                if (this.#log >= LOG_DEBUG) {
-                    console.log(`${EXTENSION_LOG_NAME} Loaded ${DISPLAYS_WINDOWS_STATE_FILE}`);
+                if (this.#log.debugp) {
+                    this.#log.log(`Loaded ${DISPLAYS_WINDOWS_STATE_FILE}`);
                 }
                 const ret = JSON.parse(str, Persist.#reviver);
                 return ret;
             }
-            throw new Error(`${EXTENSION_LOG_NAME}: load failed: No contents found in ${DISPLAYS_WINDOWS_STATE_FILE}`)
+            throw new Error(`${this.#log.prefix} load failed: No contents found in ${DISPLAYS_WINDOWS_STATE_FILE}`)
         }
-        throw new Error(`${EXTENSION_LOG_NAME}: load failed: No directory for ${DISPLAYS_WINDOWS_STATE_FILE}`)
+        throw new Error(`${this.#log.prefix} load failed: No directory for ${DISPLAYS_WINDOWS_STATE_FILE}`)
     }
 
     // This and #reviver are from https://stackoverflow.com/questions/29085197/how-do-you-json-stringify-an-es6-map/56150320#56150320
@@ -132,6 +165,7 @@ class Persist {
 //////// Save/Restore Window Postions ////////
 
 class WindowState {
+    #log;
     constructor(x, y, width,height, maximized, minimized, fullscreen, id, title, log) {
         this.x = x;
         this.y = y;
@@ -143,7 +177,7 @@ class WindowState {
         this.fullscreen = fullscreen;
         this.id = id;
         this.title = title;
-        this.log = log;
+        this.#log = log;
     }
 
     static fromWindow(window, log) {
@@ -210,26 +244,24 @@ class WindowState {
     }
 
     #logDifferences(window) {
-        if (this.log >= LOG_ERROR) {
-            let hasDiffs = false;
-            if (window.minimized !== this.minimized) {
-                console.error(`${EXTENSION_LOG_NAME} Error: Wrong minimized: ${window.minimized()}, title:${this.title}`);
-                hasDiffs = true;
-            }
-            if (window.get_maximized() !== this.maximized) {
-                console.error(`${EXTENSION_LOG_NAME} Error: Wrong maximized: ${window.get_maximized()}, title:${this.title}`);
-                hasDiffs = true;
-            }
-            // This test fails when there is a difference between saved and current maximization, though the window
-            // behaviour is correct.  Due to an asynchronous update?
-            if (this.log >= LOG_EVERYTHING && !this.#equalRect(window)) {
-                const r = window.get_frame_rect();
-                console.error(`${EXTENSION_LOG_NAME} Error: Wrong rectangle: x:${r.x}, y:${r.y}, w:${r.width}, h:${r.height}, title:${this.title}`);
-                hasDiffs = true;
-            }
-            if (hasDiffs)
-                console.error(`${EXTENSION_LOG_NAME} Expecting: ${this}`);
+        let hasDiffs = false;
+        if (window.minimized !== this.minimized) {
+            this.#log.error(`Wrong minimized: ${window.minimized()}, title:${this.title}`);
+            hasDiffs = true;
         }
+        if (window.get_maximized() !== this.maximized) {
+            this.#log.error(`Wrong maximized: ${window.get_maximized()}, title:${this.title}`);
+            hasDiffs = true;
+        }
+        // This test fails when there is a difference between saved and current maximization, though the window
+        // behaviour is correct.  Due to an asynchronous update?
+        if (this.log >= LOG_EVERYTHING && !this.#equalRect(window)) {
+            const r = window.get_frame_rect();
+            this.#log.error(`Wrong rectangle: x:${r.x}, y:${r.y}, w:${r.width}, h:${r.height}, title:${this.title}`);
+            hasDiffs = true;
+        }
+        if (hasDiffs)
+            this.#log.error(`Expecting: ${this}`);
     }
 }
 
@@ -253,14 +285,12 @@ class AllWindowsStates {
         if (! this.#windowsStates) {
             if (windowStateSaved) {
                 this.#windowsStates = await this.#persist.load().catch(e => {
-                    console.error(`${EXTENSION_LOG_NAME}: #getWindowsStates caught:\n`, e);
+                    this.#log.exception("#getWindowsStates caught", e);
                     return new Map();
                 });
             } else {
                 this.#windowsStates = new Map();
-                if (this.#log >= LOG_DEBUG) {
-                    console.log(`${EXTENSION_LOG_NAME}: Initializing windows states to empty because windowStateSaved is false`);
-                }
+                this.#log.debug("Initializing windows states to empty because windowStateSaved is false");
             }
         }
         return this.#windowsStates;
@@ -269,12 +299,12 @@ class AllWindowsStates {
     async #saveWindowsStates() {
         if (this.#windowsStates) {
             if (await this.#persist.save(this.#windowsStates).catch(e => {
-                console.error(`${EXTENSION_LOG_NAME}: #saveWindowsStates caught:\n`, e);
+                this.#log.exception("#saveWindowsStates caught", e);
                 return false;
             })) {
                 windowStateSaved = true;
             } else {
-                console.error(`${EXTENSION_LOG_NAME}: Failed to save the windows states to the file`);
+                this.#log.error("Failed to save the windows states to the file");
             }
         }
     }
@@ -291,8 +321,8 @@ class AllWindowsStates {
             displaySize__windowId__state.set(displaySizeKey, new Map());
         }
         const windowId__state = displaySize__windowId__state.get(displaySizeKey);
-        if (this.#log >= LOG_DEBUG)
-            console.log(`${EXTENSION_LOG_NAME} ${why}: map size: ${windowId__state.size}  display size: ${size}  start time: ${START_TIME}`);
+        if (this.#log.debugp)
+            this.#log.log(`${why}: map size: ${windowId__state.size}  display size: ${size}  start time: ${START_TIME}`);
         return windowId__state;
     }
 
@@ -302,8 +332,8 @@ class AllWindowsStates {
         for (const window of this.#getWindows()) {
             const state = WindowState.fromWindow(window, this.#log);
             windowId__state.set(window.get_id(), state);
-            if (this.#log >= LOG_INFO)
-                console.log(`${EXTENSION_LOG_NAME} Save ${state}`);
+            if (LOG_DEFAULT >= LOG_INFO || this.#log.debugp)
+                this.#log.log(`Save ${state}`);
         }
     }
 
@@ -316,11 +346,11 @@ class AllWindowsStates {
                 restoreCount++;
                 if (!windowId__state.get(window.get_id()).restore(window))
                     changedRectCount++;
-            } else if (this.#log >= LOG_DEBUG)
-                console.log(`${EXTENSION_LOG_NAME} ${why} did not find: ${window.get_id()} ${window.get_title()}`);
+            } else if (this.#log.debugp)
+                this.#log.log(`${why} did not find: ${window.get_id()} ${window.get_title()}`);
         }
-        if (this.#log >= LOG_INFO)
-            console.log(`${EXTENSION_LOG_NAME} ${why}: ${changedRectCount}/${restoreCount} restored windows were moved`);
+        if (LOG_DEFAULT >= LOG_INFO || this.#log.debugp)
+            this.#log.log(`${why}: ${changedRectCount}/${restoreCount} restored windows were moved`);
     }
 }
 
@@ -329,8 +359,9 @@ class AllWindowsStates {
 const WindowList = GObject.registerClass(
 class WindowList extends PanelMenu.Button {
 
-    _init(allWindowsStates, metadata) {
+    _init(allWindowsStates, metadata, log) {
         super._init(0.0, metadata.name);
+        this._log = log;
 
         (async () => {
             this._allWindowsStates = allWindowsStates;
@@ -340,7 +371,7 @@ class WindowList extends PanelMenu.Button {
 
             this._restacked = global.display.connect('restacked', () => this.updateMenu());
         })().catch (e => {
-            console.error(`${EXTENSION_LOG_NAME}: WindowList._init caught:\n`, e);
+            this._log.exception("WindowList._init caught", e);
         });
     }
 
@@ -360,12 +391,12 @@ class WindowList extends PanelMenu.Button {
         {
             let item = new PopupMenu.PopupMenuItem('Save window positions');
             item.connect('activate', () => this._allWindowsStates.saveWindowPositions('Save')
-                         .catch (e => {console.error(`${EXTENSION_LOG_NAME}: Save menu item caught:\n`, e);}));
+                         .catch (e => {this._log.exception("Save menu item caught", e);}));
             this.menu.addMenuItem(item);
 
             item = new PopupMenu.PopupMenuItem('Restore window positions');
             item.connect('activate', () => this._allWindowsStates.restoreWindowPositions('Restore')
-                         .catch (e => {console.error(`${EXTENSION_LOG_NAME}: Restore menu item caught:\n`, e);}));
+                         .catch (e => {this._log.exception("Restore menu item caught", e);}));
             this.menu.addMenuItem(item);
 
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -480,26 +511,34 @@ function ellipsizedWindowTitle(w){
 
 export default class AllWindowsExtension extends Extension {
 
+    #log;
+    #allWindowsStates
+    #windowlist
+
     constructor(metadata) {
         super(metadata);
-        this._metadata = metadata;
     }
 
     enable() {
-        this._allWindowsStates = new AllWindowsStates(this._metadata.uuid, LOG_LEVEL);
-        this._windowlist = new WindowList(this._allWindowsStates, this._metadata);
-        Main.panel.addToStatusArea(this.uuid, this._windowlist, -1, 'right');
+        this.#log = new Log(this.getSettings());
+        this.#log.debug("enable() starting");
+        this.#allWindowsStates = new AllWindowsStates(this.metadata.uuid, this.#log);
+        this.#windowlist = new WindowList(this.#allWindowsStates, this.metadata, this.#log);
+        Main.panel.addToStatusArea(this.uuid, this.#windowlist, -1, 'right');
+        this.#log.debug("enable() ending");
     }
 
     disable() {
-        this._windowlist?.destroy();
+        this.#log.debug("disable() starting");
+        this.#windowlist?.destroy();
         (async () => {
-            await this._allWindowsStates?.destroy();
-            if (LOG_LEVEL >= LOG_DEBUG)
-                console.log(`${EXTENSION_LOG_NAME} disable's destroy is done`);
-            this._windowlist = null;
+            await this.#allWindowsStates?.destroy();
+            this.#log.debug("AllWindowsStates destroy is done");
+            this.#windowlist = null;
+            this.#log = null;
         })().catch (e => {
             console.error(`${EXTENSION_LOG_NAME}: disable caught:\n`, e);
         });
+        this.#log?.debug("disable() ending");
     }
 }

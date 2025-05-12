@@ -275,10 +275,15 @@ class AllWindowsStates {
         this.#windowsStates = null;
     }
 
-    async destroy() {
-        await this.saveWindowPositions('Disable: Save');
-        await this.#saveWindowsStates();
-        this.#windowsStates?.clear();
+    destroy() {
+        (async () => {
+            await this.saveWindowPositions('Disable: Save');
+            await this.#saveWindowsStates();
+            this.#windowsStates?.clear();
+            this.#log.debug("AllWindowsStates destroy is done");
+        })().catch (e => {
+            this.#log.exception("AllWindowsStates destroy caught", e);
+        });
     }
 
     async #getWindowsStates() {
@@ -531,14 +536,10 @@ export default class AllWindowsExtension extends Extension {
     disable() {
         this.#log.debug("disable() starting");
         this.#windowlist?.destroy();
-        (async () => {
-            await this.#allWindowsStates?.destroy();
-            this.#log.debug("AllWindowsStates destroy is done");
-            this.#windowlist = null;
-            this.#log = null;
-        })().catch (e => {
-            console.error(`${EXTENSION_LOG_NAME}: disable caught:\n`, e);
-        });
-        this.#log?.debug("disable() ending");
+        this.#windowlist = null;
+        this.#allWindowsStates?.destroy();
+        this.#allWindowsStates = null;
+        this.#log.debug("disable() ending");
+        this.#log = null;
     }
 }

@@ -24,28 +24,28 @@ const EXTENSION_LOG_NAME = 'All Windows SRWP';
 const START_TIME = GLib.DateTime.new_now_local().format_iso8601();
 let enableCount = 0;
 
-const LOG_ERROR = 1;
+// const LOG_ERROR = 1;
 const LOG_INFO = 2;
 const LOG_DEBUG = 3;
-const LOG_EVERYTHING = 4;
-
-const LOG_DEFAULT = LOG_ERROR;
+const LOG_ALL = 4;
 
 class Log {
     #enableCount;
     // Intended to be called at the beginning of Extension.enable().
     constructor(settings) {
-        // Reading the debug logging setting only when constructed at each enable is good enough.
+        // Reading the log-level setting only when constructed at each enable is good enough.
         // The setting could be bound to the WindowList GObject so changes took effect immediately,
         // but that is ugly and brittle.
-        const level = settings.get_boolean("debug") ? LOG_DEBUG : LOG_DEFAULT;
+        const level = settings.get_enum("log-level");
+        this.infop = level >= LOG_INFO;
         this.debugp = level >= LOG_DEBUG;
+        this.allp = level >= LOG_ALL;
         enableCount += 1;
         this.#enableCount = enableCount;
         this.prefix = `${EXTENSION_LOG_NAME} #${this.#enableCount}:`;
     }
 
-    // Don't use console.debug(), so that debug control is only by settings and LOG_DEFAULT.
+    // Don't use console.debug(), so that debug control is only by settings
 
     log(msg) {
         console.log(`${EXTENSION_LOG_NAME} #${this.#enableCount}: ${msg}`);
@@ -166,17 +166,22 @@ class Persist {
 
 class WindowState {
     #log;
-    constructor(x, y, width,height, maximized, minimized, fullscreen, id, title, log) {
+    constructor(x, y, width,height, maximizedH, maximizedV, minimized, fullscreen, id, title, log) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.maximized = maximized;
+        this.maximizedH = maximizedH;
+        this.maximizedV = maximizedV;
         this.minimized = minimized;
         // The following are only used for logging
         this.fullscreen = fullscreen;
         this.id = id;
         this.title = title;
+        this.#log = log;
+    }
+
+    setLog(log) {
         this.#log = log;
     }
 
@@ -187,7 +192,8 @@ class WindowState {
             rect.y,
             rect.width,
             rect.height,
-            window.get_maximized(),
+            window.maximized_horizontally,
+            window.maximized_vertically,
             window.minimized,
             window.fullscreen,
             window.get_id(),
@@ -197,15 +203,19 @@ class WindowState {
     }
 
     toString() {
-        return `x:${this.x}, y:${this.y}, w:${this.width}, h:${this.height}, maximized:${this.maximized}, ` +
+        return `x:${this.x}, y:${this.y}, w:${this.width}, h:${this.height}, ` +
+            `maximizedH:${this.maximizedH}, maximizedV:${this.maximizedV}, ` +
             `minimized:${this.minimized}, fullscreen:${this.fullscreen}, id:${this.id}, title:${this.title}`;
     }
 
     restore(currentWindow) {
         const equalRect = this.#equalRect(currentWindow);
         if (!equalRect) {
-            if (currentWindow.get_maximized())
-                currentWindow.unmaximize(Meta.MaximizeFlags.BOTH);
+            const flags = currentWindow.get_maximize_flags();
+            if (flags) {
+                currentWindow.set_unmaximize_flags(flags);
+                currentWindow.unmaximize()
+            }
             this.#moveResizeFrame(currentWindow);
         }
         this.#setMaximized(currentWindow);
@@ -226,11 +236,36 @@ class WindowState {
     }
 
     #setMaximized(window) {
-        if (window.get_maximized() !== this.maximized) {
-            if (this.maximized)
-                window.maximize(this.maximized);
-            else
-                window.unmaximize(Meta.MaximizeFlags.BOTH);
+        const changeH = window.maximized_horizontally !== this.maximizedH;
+        const changeV = window.maximized_vertically !== this.maximizedV;
+        if (changeH || changeV) {
+            // 5/4/26 Gnome 50 - Attempting to set only horizontal or vertical maximization results in full maximization.
+            // Also, seting only horizontal or vertical unmaximize results in no maximization.
+            // Is this a bug or due to some subtlety in the API?  Therefore, only set full maximize or unmaximize.
+            // It turns out that after saving a partial maximization, #moveResizeFrame does all that is needed
+            // to restore the window's position and size.  Because a single maximize flag can't be set,
+            // the restore doesn't fully replicate what was saved, but that will have to do.
+            // In Gnome 49, single maximize flags are not set for half-screen maximization.
+
+            // const unmaximizeFlags = WindowState.#getMaximizeFlags(
+            //     changeH && window.maximized_horizontally,
+            //     changeV && window.maximized_vertically);
+            // if (unmaximizeFlags) {
+            //     window.set_unmaximize_flags(unmaximizeFlags);
+            //     window.unmaximize();
+            // }
+            // if (this.maximizedH || this.maximizedV) {
+            //     window.set_maximize_flags(WindowState.#getMaximizeFlags(this.maximizedH, this.maximizedV));
+            //     window.maximize();
+            // }
+
+            if (this.maximizedH && this.maximizedV) {
+                window.set_maximize_flags(Meta.MaximizeFlags.BOTH);
+                window.maximize();
+            } else {
+                window.set_unmaximize_flags(Meta.MaximizeFlags.BOTH);
+                window.unmaximize();
+            }
         }
     }
 
@@ -244,25 +279,41 @@ class WindowState {
     }
 
     #logDifferences(window) {
-        let hasDiffs = false;
+        let hasError = false;
+        let hasNote = false;
         if (window.minimized !== this.minimized) {
             this.#log.error(`Wrong minimized: ${window.minimized()}, title:${this.title}`);
-            hasDiffs = true;
+            hasError = true;
         }
-        if (window.get_maximized() !== this.maximized) {
-            this.#log.error(`Wrong maximized: ${window.get_maximized()}, title:${this.title}`);
-            hasDiffs = true;
+        if (window.maximized_horizontally !== this.maximizedH) {
+            // 5/4/26 Gnome 50 - Just note; apparently it's not possible to set only a maximize horizontal or vertical flag
+            this.#log.log(`NOTE: Wrong maximizedH: ${window.maximized_horizontally}, title:${this.title}`);
+            hasNote = true;
+        }
+        if (window.maximized_vertically !== this.maximizedV) {
+            // 5/4/26 Gnome 50 - Just note; apparently it's not possible to set only a maximize horizontal or vertical flag
+            this.#log.log(`NOTE: Wrong maximizedV: ${window.maximized_vertically}, title:${this.title}`);
+            hasNote = true;
         }
         // This test fails when there is a difference between saved and current maximization, though the window
         // behaviour is correct.  Due to an asynchronous update?
-        if (this.log >= LOG_EVERYTHING && !this.#equalRect(window)) {
+        if (this.#log.allp && !this.#equalRect(window)) {
             const r = window.get_frame_rect();
             this.#log.error(`Wrong rectangle: x:${r.x}, y:${r.y}, w:${r.width}, h:${r.height}, title:${this.title}`);
-            hasDiffs = true;
+            hasError = true;
         }
-        if (hasDiffs)
+        if (hasError)
             this.#log.error(`Expecting: ${this}`);
+        else if (hasNote && this.#log.debugp)
+            this.#log.log(`NOTE: Expecting: ${this}`);
     }
+
+    // static #getMaximizeFlags(maximizedH, maximizedV) {
+    //     if (maximizedH && maximizedV) return Meta.MaximizeFlags.BOTH;
+    //     if (maximizedH) return Meta.MaximizeFlags.HORIZONTAL;
+    //     if (maximizedV) return Meta.MaximizeFlags.VERTICAL;
+    //     return 0;
+    // }
 }
 
 class AllWindowsStates {
@@ -337,24 +388,26 @@ class AllWindowsStates {
         for (const window of this.#getWindows()) {
             const state = WindowState.fromWindow(window, this.#log);
             windowId__state.set(window.get_id(), state);
-            if (LOG_DEFAULT >= LOG_INFO || this.#log.debugp)
+            if (this.#log.infop)
                 this.#log.log(`Save ${state}`);
         }
     }
 
-    async restoreWindowPositions(why) {
+    async restoreWindowPositions(why, log) {
         const windowId__state = await this.#getWindowStateMap(why);
         let restoreCount = 0;
         let changedRectCount = 0;
         for (const window of this.#getWindows()) {
             if (windowId__state.has(window.get_id())) {
                 restoreCount++;
-                if (!windowId__state.get(window.get_id()).restore(window))
+                const windowState = windowId__state.get(window.get_id());
+                windowState.setLog(log);
+                if (!windowState.restore(window))
                     changedRectCount++;
             } else if (this.#log.debugp)
                 this.#log.log(`${why} did not find: ${window.get_id()} ${window.get_title()}`);
         }
-        if (LOG_DEFAULT >= LOG_INFO || this.#log.debugp)
+        if (this.#log.infop)
             this.#log.log(`${why}: ${changedRectCount}/${restoreCount} restored windows were moved`);
     }
 }
@@ -370,7 +423,7 @@ class WindowList extends PanelMenu.Button {
 
         (async () => {
             this._allWindowsStates = allWindowsStates;
-            await this._allWindowsStates.restoreWindowPositions('Enable: Restore');
+            await this._allWindowsStates.restoreWindowPositions('Enable: Restore', this._log);
             this.add_child(new St.Icon({ icon_name: 'view-grid-symbolic', style_class: 'system-status-icon' }));
             this.updateMenu();
 
@@ -400,7 +453,7 @@ class WindowList extends PanelMenu.Button {
             this.menu.addMenuItem(item);
 
             item = new PopupMenu.PopupMenuItem('Restore window positions');
-            item.connect('activate', () => this._allWindowsStates.restoreWindowPositions('Restore')
+            item.connect('activate', () => this._allWindowsStates.restoreWindowPositions('Restore', this._log)
                          .catch (e => {this._log.exception("Restore menu item caught", e);}));
             this.menu.addMenuItem(item);
 

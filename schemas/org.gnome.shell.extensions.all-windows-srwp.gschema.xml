@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
+ <enum id="org.gnome.shell.extensions.all-windows-srwp.log-level">
+    <value value="1" nick="error"/>
+    <value value="2" nick="info"/>
+    <value value="3" nick="debug"/>
+    <value value="4" nick="all"/>
+  </enum>
   <schema id="org.gnome.shell.extensions.all-windows-srwp" path="/org/gnome/shell/extensions/all-windows-srwp/">
-    <key name="debug" type="b">
-      <default>false</default>
-      <summary>Turn on/off debug output</summary>
-      <description>A change in setting takes effect after a logout or shutdown.</description>
+    <key name="log-level" enum="org.gnome.shell.extensions.all-windows-srwp.log-level">
+      <default>'error'</default>
+      <summary>error, info, debug, all: the minimum severity level of messages logged in /var/log/syslog</summary>
+      <description>A change in setting takes effect after a suspend, logout, or shutdown.</description>
     </key>
   </schema>
 </schemalist>

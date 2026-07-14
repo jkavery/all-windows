@@ -614,10 +614,12 @@ export default class AllWindowsExtension extends Extension {
     }
 
     SaveSession() {
-        console.log("D-Bus triggered: Saving Session")
+        console.log("Saving window states...")
+        this.#allWindowsStates.saveWindowPositions("SaveSession triggered via DBus")
     }
 
     RestoreSession() {
-        console.log("D-Bus triggered: Restoring Session")
+        console.log("Restoring window states...")
+        this.#allWindowsStates.restoreWindowPositions("RestoreSession triggered via DBus")
     }
 }

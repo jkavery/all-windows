@@ -7,6 +7,8 @@ The All Windows functionality is a port by lyonel of his Cinnamon applet (now in
 
 It displays a menu listing all open windows on all workspaces on the right-hand side of the GNOME top bar and allows quickly switching between them.
 
+Additionally, it exposes save/restore window positions as [D-Bus](https://www.freedesktop.org/wiki/Software/dbus/) methods.
+
 Save/Restore window positions additional functionality
 ------------------------------------------------------
 At the top of the menu, preceding the listing of open windows, are two buttons: *Save window positions* and *Restore window positions*.
@@ -14,6 +16,19 @@ At the top of the menu, preceding the listing of open windows, are two buttons: 
 The buttons are used to remember and restore the positions of the open windows in the display.  The set of window positions is associated with the current display size, which can change when monitors are added or removed.  Each display size has its own set of window positions.
 
 In addition, window positions are automatically saved when the computer is suspended and restored when it is resumed.  This provides a workaround for [Bug #1778983 “Resume from suspend on Wayland breaks window positioning” : Bugs : mutter package : Ubuntu](https://bugs.launchpad.net/ubuntu/+source/mutter/+bug/1778983).  The problem remains in Ubuntu 22.04.
+
+### RPC
+
+This extension exposes two D-Bus methods: `org.gnome.Shell.Extensions.AllWindows.SaveSession` and `org.gnome.Shell.Extensions.AllWindows.RestoreSession`. You can call them in scripts using
+
+```bash
+gdbus call --session \
+  --dest org.gnome.Shell \
+  --object-path /org/gnome/Shell/Extensions/AllWindows \
+  --method org.gnome.Shell.Extensions.AllWindows.METHOD
+```
+
+Where `METHOD` is one of `SaveSession` or `RestoreSession`.
 
 ### Limitations
  * Restore does not manage which windows are on top.  However, in testing to date the correct windows have always been shown on top.

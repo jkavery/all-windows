@@ -68,6 +68,12 @@ gdbus call --session \
   --method org.gnome.Shell.Extensions.AllWindows.SaveSession
 ```
 
+We can also tail the journal to see log messages with
+
+```
+journalctl --user -f -o cat /usr/bin/gnome-shell
+```
+
 License
 -------
 This extension is released under the GNU Public License version 2.

@@ -613,13 +613,13 @@ export default class AllWindowsExtension extends Extension {
         this.#log = null;
     }
 
-    SaveSession() {
-        console.log("Saving window states...")
-        this.#allWindowsStates.saveWindowPositions("SaveSession triggered via DBus")
+    async SaveSession() {
+        this.#log.log("Saving window states...")
+        await this.#allWindowsStates.saveWindowPositions("SaveSession triggered via DBus")
     }
 
-    RestoreSession() {
-        console.log("Restoring window states...")
-        this.#allWindowsStates.restoreWindowPositions("RestoreSession triggered via DBus")
+    async RestoreSession() {
+        this.#log.log("Restoring window states...")
+        await this.#allWindowsStates.restoreWindowPositions("RestoreSession triggered via DBus", this.#log)
     }
 }

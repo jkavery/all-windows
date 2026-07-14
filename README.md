@@ -36,6 +36,38 @@ Compatibility
 -------------
 This extension has been tested on GNOME 49 and 50.
 
+Testing
+-------
+
+These are Randy's notes about testing the addition of method calls. The way to
+test extensions on Wayland is to make a nested `gnome-shell` and interact with
+the extension via `gdbus`:
+
+First, install the development extension:
+
+1. Run `make` to compile schemas
+2. Find the extension directory under `~/.local/share/gnome-shell/extensions/`
+3. Delete it and create a soft link to your development repository with `ln -sf ~/git/all-windows ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io`
+
+Then, set up a nested shell and test:
+
+```bash
+# 1. Enter the subshell container
+dbus-run-session -- zsh
+
+# 2. Start the headless engine in the background
+gnome-shell --devkit --wayland --headless --virtual-monitor 1024x768 &
+
+# 3. Make sure the extension is enabled 
+gnome-extensions enable all-windows-srwp@jkavery.github.io
+
+# 4. Trigger a method call. We can use console.log in the method to confirm
+gdbus call --session \
+  --dest org.gnome.Shell \
+  --object-path /org/gnome/Shell/Extensions/AllWindows \
+  --method org.gnome.Shell.Extensions.AllWindows.SaveSession
+```
+
 License
 -------
 This extension is released under the GNU Public License version 2.

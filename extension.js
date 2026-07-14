@@ -19,6 +19,15 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
   It adds save/restore window posiitons functionality.
 */
 
+// Define the DBus layout using standard introspection XML format
+const AllWindowsIface = `
+<node>
+  <interface name="org.gnome.Shell.Extensions.AllWindows">
+    <method name="SaveSession" />
+    <method name="RestoreSession" />
+  </interface>
+</node>`;
+
 // The following are only used for logging
 const EXTENSION_LOG_NAME = 'All Windows SRWP';
 const START_TIME = GLib.DateTime.new_now_local().format_iso8601();
@@ -572,6 +581,7 @@ export default class AllWindowsExtension extends Extension {
     #log;
     #allWindowsStates
     #windowlist
+    #dbusImpl
 
     constructor(metadata) {
         super(metadata);
@@ -583,6 +593,8 @@ export default class AllWindowsExtension extends Extension {
         this.#allWindowsStates = new AllWindowsStates(this.metadata.uuid, this.#log);
         this.#windowlist = new WindowList(this.#allWindowsStates, this.metadata, this.#log);
         Main.panel.addToStatusArea(this.uuid, this.#windowlist, -1, 'right');
+        this.#dbusImpl = Gio.DBusExportedObject.wrapJSObject(AllWindowsIface, this);
+        this.#dbusImpl.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/AllWindows')
         this.#log.debug("enable() ending");
     }
 
@@ -592,7 +604,20 @@ export default class AllWindowsExtension extends Extension {
         this.#windowlist = null;
         this.#allWindowsStates?.destroy();
         this.#allWindowsStates = null;
+        if (this.#dbusImpl) {
+            this.#dbusImpl.flush()
+            this.#dbusImpl.unexport();
+            this.#dbusImpl = null;
+        }
         this.#log.debug("disable() ending");
         this.#log = null;
+    }
+
+    SaveSession() {
+        console.log("D-Bus triggered: Saving Session")
+    }
+
+    RestoreSession() {
+        console.log("D-Bus triggered: Restoring Session")
     }
 }

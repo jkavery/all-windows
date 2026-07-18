@@ -400,6 +400,8 @@ class AllWindowsStates {
             if (this.#log.infop)
                 this.#log.log(`Save ${state}`);
         }
+        if (this.#log.infop)
+            this.#log.log(`${why} is done`)
     }
 
     async restoreWindowPositions(why, log) {

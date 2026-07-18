@@ -23,8 +23,8 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 const AllWindowsIface = `
 <node>
   <interface name="org.gnome.Shell.Extensions.AllWindows">
-    <method name="SavePositions" />
-    <method name="RestorePositions" />
+    <method name="SaveSession" />
+    <method name="RestoreSession" />
   </interface>
 </node>`;
 

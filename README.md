@@ -37,7 +37,28 @@ Where `METHOD` is one of `SavePositions` or `RestorePositions`.
 
 Configuration
 -------------
-There is nothing to configure.
+
+There is one configuration key under
+`/org/gnome/shell/extensions/all-windows-srwp/`  called `log-level`. It is of
+type `org.gnome.shell.extensions.all-windows-srwp.log-level`, which you can
+inspect in
+[schemas/org.gnome.shell.extensions.all-windows-srwp.gschema.xml](schemas/org.gnome.shell.extensions.all-windows-srwp.gschema.xml).
+You can e.g. display all log messages by settings the key to `all` as follows:
+
+```bash
+gsettings --schemadir \
+   ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/schemas/ \
+   set org.gnome.shell.extensions.all-windows-srwp log-level all
+```
+
+The current setting, if any (a default value is used out-of-the-box), can
+likewise be queried with
+
+```bash
+gsettings --schemadir \
+   ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/schemas/ \
+   get org.gnome.shell.extensions.all-windows-srwp log-level
+```
 
 Installation
 ------------

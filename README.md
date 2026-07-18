@@ -54,7 +54,7 @@ This extension has been tested on GNOME 49 and 50.
 Testing
 -------
 
-These are Randy's notes about testing the addition of method calls. The way to
+These are @thisisrandy's notes about testing the addition of method calls. The way to
 test extensions on Wayland is to make a nested `gnome-shell` and interact with
 the extension via `gdbus`:
 

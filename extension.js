@@ -459,12 +459,12 @@ class WindowList extends PanelMenu.Button {
         let tracker = Shell.WindowTracker.get_default();
         {
             let item = new PopupMenu.PopupMenuItem('Save window positions');
-            item.connect('activate', () => this._allWindowsStates.saveWindowPositions('Save')
+            item.connect('activate', () => this._allWindowsStates.saveWindowPositions('Menu Save')
                          .catch (e => {this._log.exception("Save menu item caught", e);}));
             this.menu.addMenuItem(item);
 
             item = new PopupMenu.PopupMenuItem('Restore window positions');
-            item.connect('activate', () => this._allWindowsStates.restoreWindowPositions('Restore', this._log)
+            item.connect('activate', () => this._allWindowsStates.restoreWindowPositions('Menu Restore', this._log)
                          .catch (e => {this._log.exception("Restore menu item caught", e);}));
             this.menu.addMenuItem(item);
 

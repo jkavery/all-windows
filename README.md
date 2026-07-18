@@ -19,7 +19,7 @@ In addition, window positions are automatically saved when the computer is suspe
 
 ### RPC
 
-This extension exposes two D-Bus methods: `org.gnome.Shell.Extensions.AllWindows.SaveSession` and `org.gnome.Shell.Extensions.AllWindows.RestoreSession`. You can call them in scripts using
+This extension exposes two D-Bus methods: `org.gnome.Shell.Extensions.AllWindows.SavePositions` and `org.gnome.Shell.Extensions.AllWindows.RestorePositions`. You can call them in scripts using
 
 ```bash
 gdbus call --session \
@@ -28,7 +28,7 @@ gdbus call --session \
   --method org.gnome.Shell.Extensions.AllWindows.METHOD
 ```
 
-Where `METHOD` is one of `SaveSession` or `RestoreSession`.
+Where `METHOD` is one of `SavePositions` or `RestorePositions`.
 
 ### Limitations
  * Restore does not manage which windows are on top.  However, in testing to date the correct windows have always been shown on top.
@@ -80,7 +80,7 @@ gnome-extensions enable all-windows-srwp@jkavery.github.io
 gdbus call --session \
   --dest org.gnome.Shell \
   --object-path /org/gnome/Shell/Extensions/AllWindows \
-  --method org.gnome.Shell.Extensions.AllWindows.SaveSession
+  --method org.gnome.Shell.Extensions.AllWindows.SavePositions
 ```
 
 We can also tail the journal to see log messages with

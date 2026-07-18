@@ -23,8 +23,8 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 const AllWindowsIface = `
 <node>
   <interface name="org.gnome.Shell.Extensions.AllWindows">
-    <method name="SaveSession" />
-    <method name="RestoreSession" />
+    <method name="SavePositions" />
+    <method name="RestorePositions" />
   </interface>
 </node>`;
 
@@ -613,15 +613,15 @@ export default class AllWindowsExtension extends Extension {
         this.#log = null;
     }
 
-    async SaveSession() {
-        await this.#allWindowsStates.saveWindowPositions("DBus SaveSession").catch(e => {
-            this.#log.exception("SaveSession caught", e);
+    async SavePositions() {
+        await this.#allWindowsStates.saveWindowPositions("DBus SavePositions").catch(e => {
+            this.#log.exception("SavePositions caught", e);
         });
     }
 
-    async RestoreSession() {
-        await this.#allWindowsStates.restoreWindowPositions("DBus RestoreSession").catch(e => {
-            this.#log.exception("RestoreSession caught", e);
+    async RestorePositions() {
+        await this.#allWindowsStates.restoreWindowPositions("DBus RestorePositions").catch(e => {
+            this.#log.exception("RestorePositions caught", e);
         });
     }
 }

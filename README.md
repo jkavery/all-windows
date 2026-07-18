@@ -7,6 +7,8 @@ The All Windows functionality is a port by lyonel of his Cinnamon applet (now in
 
 It displays a menu listing all open windows on all workspaces on the right-hand side of the GNOME top bar and allows quickly switching between them.
 
+Additionally, it exposes save/restore window positions as [D-Bus](https://www.freedesktop.org/wiki/Software/dbus/) methods.
+
 Save/Restore window positions additional functionality
 ------------------------------------------------------
 At the top of the menu, preceding the listing of open windows, are two buttons: *Save window positions* and *Restore window positions*.
@@ -14,6 +16,19 @@ At the top of the menu, preceding the listing of open windows, are two buttons: 
 The buttons are used to remember and restore the positions of the open windows in the display.  The set of window positions is associated with the current display size, which can change when monitors are added or removed.  Each display size has its own set of window positions.
 
 In addition, window positions are automatically saved when the computer is suspended and restored when it is resumed.  This provides a workaround for [Bug #1778983 “Resume from suspend on Wayland breaks window positioning” : Bugs : mutter package : Ubuntu](https://bugs.launchpad.net/ubuntu/+source/mutter/+bug/1778983).  The problem remains in Ubuntu 22.04.
+
+### RPC
+
+This extension exposes two D-Bus methods: `org.gnome.Shell.Extensions.AllWindows.SavePositions` and `org.gnome.Shell.Extensions.AllWindows.RestorePositions`. You can call them in scripts using
+
+```bash
+gdbus call --session \
+  --dest org.gnome.Shell \
+  --object-path /org/gnome/Shell/Extensions/AllWindows \
+  --method org.gnome.Shell.Extensions.AllWindows.METHOD
+```
+
+Where `METHOD` is one of `SavePositions` or `RestorePositions`.
 
 ### Limitations
  * Restore does not manage which windows are on top.  However, in testing to date the correct windows have always been shown on top.
@@ -35,6 +50,44 @@ Note: you may have to explicitly enable the extension after installation.
 Compatibility
 -------------
 This extension has been tested on GNOME 49 and 50.
+
+Testing
+-------
+
+These are @thisisrandy's notes about testing the addition of method calls. The way to
+test extensions on Wayland is to make a nested `gnome-shell` and interact with
+the extension via `gdbus`:
+
+First, install the development extension:
+
+1. Run `make` to compile schemas
+2. Find the extension directory under `~/.local/share/gnome-shell/extensions/`
+3. Delete it and create a soft link to your development repository with `ln -sf ~/git/all-windows ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io`
+
+Then, set up a nested shell and test:
+
+```bash
+# 1. Enter the subshell container
+dbus-run-session -- zsh
+
+# 2. Start the headless engine in the background
+gnome-shell --devkit --wayland --headless --virtual-monitor 1024x768 &
+
+# 3. Make sure the extension is enabled 
+gnome-extensions enable all-windows-srwp@jkavery.github.io
+
+# 4. Trigger a method call. We can use console.log in the method to confirm
+gdbus call --session \
+  --dest org.gnome.Shell \
+  --object-path /org/gnome/Shell/Extensions/AllWindows \
+  --method org.gnome.Shell.Extensions.AllWindows.SavePositions
+```
+
+We can also tail the journal to see log messages with
+
+```
+journalctl --user -f -o cat /usr/bin/gnome-shell
+```
 
 License
 -------

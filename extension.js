@@ -606,11 +606,9 @@ export default class AllWindowsExtension extends Extension {
         this.#windowlist = null;
         this.#allWindowsStates?.destroy();
         this.#allWindowsStates = null;
-        if (this.#dbusImpl) {
-            this.#dbusImpl.flush()
-            this.#dbusImpl.unexport();
-            this.#dbusImpl = null;
-        }
+        this.#dbusImpl?.flush()
+        this.#dbusImpl?.unexport();
+        this.#dbusImpl = null;
         this.#log.debug("disable() ending");
         this.#log = null;
     }

@@ -21,7 +21,7 @@ In addition, window positions are automatically saved when the computer is suspe
 
 This extension exposes two D-Bus methods: `org.gnome.Shell.Extensions.AllWindows.SavePositions` and `org.gnome.Shell.Extensions.AllWindows.RestorePositions`. You can call them in scripts using
 
-```bash
+```
 gdbus call --session \
   --dest org.gnome.Shell \
   --object-path /org/gnome/Shell/Extensions/AllWindows \
@@ -37,7 +37,29 @@ Where `METHOD` is one of `SavePositions` or `RestorePositions`.
 
 Configuration
 -------------
-There is nothing to configure.
+
+There is one configuration key, called `log-level`, which sets the lowest
+severity level of messages logged to `/var/log/syslog`.
+
+Unless changed, `log-level` is set to `error`.  The other suggested settings
+are `info` and `debug`.
+
+Use the `gsettings get` command to show the current log level:
+
+```
+gsettings --schemadir \
+   ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/schemas/ \
+   get org.gnome.shell.extensions.all-windows-srwp log-level
+```
+
+Use `gsettings set` to set a log level.  The setting persists, across logouts,
+installs, etc.  For instance, this sets it to `info`:
+
+```
+gsettings --schemadir \
+   ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/schemas/ \
+   set org.gnome.shell.extensions.all-windows-srwp log-level info
+```
 
 Installation
 ------------
@@ -66,7 +88,7 @@ First, install the development extension:
 
 Then, set up a nested shell and test:
 
-```bash
+```
 # 1. Enter the subshell container
 dbus-run-session -- zsh
 

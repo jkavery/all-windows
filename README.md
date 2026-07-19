@@ -38,26 +38,28 @@ Where `METHOD` is one of `SavePositions` or `RestorePositions`.
 Configuration
 -------------
 
-There is one configuration key under
-`/org/gnome/shell/extensions/all-windows-srwp/`  called `log-level`. It is of
-type `org.gnome.shell.extensions.all-windows-srwp.log-level`, which you can
-inspect in
-[schemas/org.gnome.shell.extensions.all-windows-srwp.gschema.xml](schemas/org.gnome.shell.extensions.all-windows-srwp.gschema.xml).
-You can e.g. display all log messages by settings the key to `all` as follows:
+There is one configuration key, called `log-level`, which sets the lowest
+severity level of messages logged to `/var/log/syslog`.
 
-```bash
-gsettings --schemadir \
-   ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/schemas/ \
-   set org.gnome.shell.extensions.all-windows-srwp log-level all
-```
+Unless changed, `log-level` is set to `error`.  The other suggested settings
+are `info` and `debug`.
 
-The current setting, if any (a default value is used out-of-the-box), can
-likewise be queried with
+Use the `gsettings get` command to show the current log level. Note that this
+might not be set explicitly after installation:
 
 ```bash
 gsettings --schemadir \
    ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/schemas/ \
    get org.gnome.shell.extensions.all-windows-srwp log-level
+```
+
+Use `gsettings set` to set a log level.  The setting persists, across logouts,
+installs, etc.  For instance, this sets it to `info`:
+
+```bash
+gsettings --schemadir \
+   ~/.local/share/gnome-shell/extensions/all-windows-srwp@jkavery.github.io/schemas/ \
+   set org.gnome.shell.extensions.all-windows-srwp log-level info
 ```
 
 Installation

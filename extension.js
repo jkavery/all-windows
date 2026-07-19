@@ -620,7 +620,7 @@ export default class AllWindowsExtension extends Extension {
     }
 
     async RestorePositions() {
-        await this.#allWindowsStates.restoreWindowPositions("DBus RestorePositions").catch(e => {
+        await this.#allWindowsStates.restoreWindowPositions("DBus RestorePositions", this.#log).catch(e => {
             this.#log.exception("RestorePositions caught", e);
         });
     }

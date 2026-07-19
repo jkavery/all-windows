@@ -44,8 +44,7 @@ severity level of messages logged to `/var/log/syslog`.
 Unless changed, `log-level` is set to `error`.  The other suggested settings
 are `info` and `debug`.
 
-Use the `gsettings get` command to show the current log level. Note that this
-might not be set explicitly after installation:
+Use the `gsettings get` command to show the current log level:
 
 ```
 gsettings --schemadir \

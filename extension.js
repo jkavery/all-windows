@@ -614,7 +614,7 @@ export default class AllWindowsExtension extends Extension {
     }
 
     async SavePositions() {
-        await this.#allWindowsStates.saveWindowPositions("DBus SavePositions", this.#log).catch(e => {
+        await this.#allWindowsStates.saveWindowPositions("DBus SavePositions").catch(e => {
             this.#log.exception("SavePositions caught", e);
         });
     }
